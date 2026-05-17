@@ -26,8 +26,18 @@ function translatePlaceholders(sql) {
 }
 
 function buildSqliteDriver() {
-  // Lazy require so prod can omit the binary dependency if undesired.
-  const Database = require('better-sqlite3');
+  // Lazy require so production (Postgres) can omit the native binding entirely.
+  // It is declared as an optionalDependency in package.json.
+  let Database;
+  try {
+    Database = require('better-sqlite3');
+  } catch (err) {
+    throw new Error(
+      'SQLite mode requested but `better-sqlite3` is not installed. ' +
+        'Set DATABASE_URL to use PostgreSQL instead, or run `npm install better-sqlite3` locally. ' +
+        `Underlying error: ${err.message}`
+    );
+  }
 
   const dbPath = path.resolve(config.db.sqlitePath);
   const dir = path.dirname(dbPath);
