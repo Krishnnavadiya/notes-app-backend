@@ -2,11 +2,19 @@
 
 A multi-user notes service backend, modelled after Google Keep / Apple Notes. Built with **Node.js + Express**, runs on **SQLite** for local development and **PostgreSQL** in production, with **JWT authentication**, **sharing**, and several thoughtful product features.
 
-> **Live demo:** _to be filled in after deployment_  →  `https://<your-app>.onrender.com`
+> ### 🚀 Live deployment
 >
-> **Interactive docs (Swagger UI):** `https://<your-app>.onrender.com/docs`
-> **Raw OpenAPI 3.0 spec:** `https://<your-app>.onrender.com/openapi.json`
-> **Web UI:** `https://<your-app>.onrender.com/ui`
+> **Base URL:** **https://notes-app-backend-tmvd.onrender.com**
+>
+> | Endpoint | URL |
+> | --- | --- |
+> | Interactive docs (Swagger UI) | https://notes-app-backend-tmvd.onrender.com/docs |
+> | OpenAPI 3.0 spec | https://notes-app-backend-tmvd.onrender.com/openapi.json |
+> | About | https://notes-app-backend-tmvd.onrender.com/about |
+> | Web UI (try the app) | https://notes-app-backend-tmvd.onrender.com/ui |
+> | Health check | https://notes-app-backend-tmvd.onrender.com/healthz |
+>
+> _Hosted on Render free tier with managed PostgreSQL — the service spins down after 15 min of idle and cold-starts in ~30 s on the first hit. The 49-step end-to-end test suite (`scripts/smoke-test.ps1`) passes against this URL._
 
 ---
 

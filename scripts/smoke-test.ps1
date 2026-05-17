@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$base = "http://localhost:3001"
+$base = if ($env:NOTES_BASE_URL) { $env:NOTES_BASE_URL } else { "http://localhost:3001" }
 
 function Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 function Pass($msg) { Write-Host "    OK  $msg" -ForegroundColor Green }
