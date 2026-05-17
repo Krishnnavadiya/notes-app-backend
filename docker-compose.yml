@@ -1,0 +1,44 @@
+services:
+  api:
+    build: .
+    container_name: notes-api
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      JWT_EXPIRES_IN: 7d
+      BCRYPT_ROUNDS: 10
+      # Comment DATABASE_URL out to use SQLite instead.
+      DATABASE_URL: postgres://notes:notes@db:5432/notes
+      OWNER_NAME: ${OWNER_NAME:-Your Name}
+      OWNER_EMAIL: ${OWNER_EMAIL:-you@example.com}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - notes_data:/app/data
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: notes-db
+    environment:
+      POSTGRES_USER: notes
+      POSTGRES_PASSWORD: notes
+      POSTGRES_DB: notes
+    ports:
+      - "5432:5432"
+    volumes:
+      - notes_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notes -d notes"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  notes_data:
+  notes_pg:

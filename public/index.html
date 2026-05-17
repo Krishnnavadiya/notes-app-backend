@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notes App</title>
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>📝</text></svg>" />
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --surface-2: #f0f2f8;
+      --text: #1b1f2a;
+      --muted: #6b7280;
+      --border: #e2e6f0;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --danger: #dc2626;
+      --success: #059669;
+      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.06);
+      --radius: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --surface-2: #273449;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --border: #334155;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      position: sticky; top: 0; z-index: 10;
+    }
+    header h1 { margin: 0; font-size: 18px; }
+    header .user { color: var(--muted); font-size: 14px; display: flex; align-items: center; gap: 12px; }
+    main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .auth-card {
+      max-width: 380px; margin: 80px auto;
+      background: var(--surface); padding: 28px;
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .auth-card h2 { margin-top: 0; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tabs button {
+      flex: 1; padding: 8px; border: 1px solid var(--border);
+      background: var(--surface-2); border-radius: 8px; cursor: pointer; color: var(--text);
+    }
+    .tabs button.active { background: var(--primary); color: white; border-color: var(--primary); }
+    input, textarea, select, button {
+      font: inherit; color: inherit;
+    }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    input[type=text], input[type=email], input[type=password], input[type=search], textarea, select {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--surface); color: var(--text); margin-bottom: 12px;
+      outline: none; transition: border-color .15s;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+    textarea { min-height: 120px; resize: vertical; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 14px; border-radius: 8px; border: 1px solid transparent;
+      background: var(--primary); color: white; cursor: pointer;
+      font-weight: 500; transition: background .15s;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn.secondary { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+    .btn.secondary:hover { background: var(--border); }
+    .btn.danger { background: var(--danger); }
+    .btn.small { padding: 4px 10px; font-size: 13px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      margin-bottom: 16px;
+    }
+    .toolbar .grow { flex: 1; min-width: 200px; }
+    .toolbar input, .toolbar select { margin-bottom: 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .note-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px; box-shadow: var(--shadow); display: flex; flex-direction: column;
+      cursor: pointer; transition: transform .12s, box-shadow .12s;
+    }
+    .note-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(15,23,42,.08); }
+    .note-card.pinned { border-color: var(--primary); }
+    .note-card h3 { margin: 0 0 8px; font-size: 16px; display: flex; align-items: center; gap: 6px; }
+    .note-card .content { color: var(--muted); font-size: 14px; flex: 1; max-height: 100px; overflow: hidden; white-space: pre-wrap; }
+    .note-card .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+    .tag { background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 11px; color: var(--muted); }
+    .note-card .meta { font-size: 11px; color: var(--muted); margin-top: 6px; display: flex; justify-content: space-between; }
+    .badge { background: var(--primary); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+    .badge.shared { background: var(--success); }
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, .6);
+      display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: var(--radius); padding: 24px;
+      max-width: 600px; width: 100%; max-height: 90vh; overflow: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+    .modal h2 { margin-top: 0; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .error { color: var(--danger); font-size: 14px; margin-bottom: 8px; min-height: 18px; }
+    .success { color: var(--success); font-size: 14px; }
+    .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+    .empty {
+      text-align: center; padding: 40px; color: var(--muted);
+      background: var(--surface); border-radius: var(--radius); border: 1px dashed var(--border);
+    }
+    .share-list { list-style: none; padding: 0; }
+    .share-list li {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .versions { list-style: none; padding: 0; max-height: 300px; overflow: auto; }
+    .versions li { padding: 8px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .versions .v-meta { color: var(--muted); font-size: 11px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📝 Notes</h1>
+    <div class="user" id="userBar"></div>
+  </header>
+
+  <main>
+    <!-- Auth view -->
+    <section id="authView" class="auth-card">
+      <h2 id="authTitle">Login</h2>
+      <div class="tabs">
+        <button id="tabLogin" class="active" type="button">Login</button>
+        <button id="tabRegister" type="button">Register</button>
+      </div>
+      <form id="authForm">
+        <label>Email</label>
+        <input id="authEmail" type="email" autocomplete="email" required />
+        <label>Password</label>
+        <input id="authPassword" type="password" autocomplete="current-password" required minlength="8" />
+        <div class="error" id="authError"></div>
+        <button class="btn" type="submit" id="authSubmit" style="width: 100%;">Login</button>
+      </form>
+    </section>
+
+    <!-- Notes view -->
+    <section id="notesView" class="hidden">
+      <div class="toolbar">
+        <input id="searchInput" class="grow" type="search" placeholder="Search notes..." />
+        <select id="filterArchived">
+          <option value="false">Active</option>
+          <option value="true">Archived</option>
+          <option value="all">All</option>
+        </select>
+        <select id="filterShared">
+          <option value="all">All notes</option>
+          <option value="owned">Only mine</option>
+          <option value="shared">Shared with me</option>
+        </select>
+        <button class="btn" id="newNoteBtn">+ New note</button>
+      </div>
+      <div id="notesGrid" class="grid"></div>
+      <div id="notesEmpty" class="empty hidden">No notes yet. Create your first one!</div>
+      <div class="pagination" id="pagination"></div>
+    </section>
+  </main>
+
+  <!-- Note editor modal -->
+  <div class="modal-bg" id="editorBg">
+    <div class="modal">
+      <h2 id="editorTitle">New note</h2>
+      <form id="editorForm">
+        <label>Title</label>
+        <input id="noteTitle" type="text" required maxlength="200" />
+        <label>Content</label>
+        <textarea id="noteContent" maxlength="100000"></textarea>
+        <label>Tags (comma-separated)</label>
+        <input id="noteTags" type="text" placeholder="work, personal, ideas" />
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input id="notePinned" type="checkbox" style="width:auto;margin:0;" /> Pin this note
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;" id="archiveLabel">
+          <input id="noteArchived" type="checkbox" style="width:auto;margin:0;" /> Archive
+        </label>
+        <div class="error" id="editorError"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" id="closeEditor">Cancel</button>
+          <button type="button" class="btn danger hidden" id="deleteNoteBtn">Delete</button>
+          <button type="button" class="btn secondary hidden" id="shareNoteBtn">Share</button>
+          <button type="button" class="btn secondary hidden" id="versionsBtn">History</button>
+          <button type="submit" class="btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Share modal -->
+  <div class="modal-bg" id="shareBg">
+    <div class="modal">
+      <h2>Share note</h2>
+      <form id="shareForm">
+        <label>Email to share with</label>
+        <input id="shareEmail" type="email" required />
+        <label>Permission</label>
+        <select id="sharePermission">
+          <option value="read">Read only</option>
+          <option value="write">Read &amp; write</option>
+        </select>
+        <div class="error" id="shareError"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" id="closeShare">Close</button>
+          <button type="submit" class="btn">Share</button>
+        </div>
+      </form>
+      <h3 style="margin-top:20px;">Already shared with</h3>
+      <ul class="share-list" id="shareList"></ul>
+    </div>
+  </div>
+
+  <!-- Versions modal -->
+  <div class="modal-bg" id="versionsBg">
+    <div class="modal">
+      <h2>Version history</h2>
+      <ul class="versions" id="versionsList"></ul>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="closeVersions">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    const API = ''; // same-origin
+
+    let token = localStorage.getItem('notes_token') || null;
+    let user = JSON.parse(localStorage.getItem('notes_user') || 'null');
+    let currentNote = null;
+    let page = 1;
+    let searchQuery = '';
+    let archivedFilter = 'false';
+    let sharedFilter = 'all';
+
+    const $ = (id) => document.getElementById(id);
+
+    async function api(path, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(API + path, { ...options, headers });
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      const body = isJson ? await res.json() : await res.text();
+      if (!res.ok) {
+        const err = new Error(body?.message || res.statusText);
+        err.status = res.status;
+        err.body = body;
+        throw err;
+      }
+      return body;
+    }
+
+    function showAuth() {
+      $('authView').classList.remove('hidden');
+      $('notesView').classList.add('hidden');
+      $('userBar').innerHTML = '';
+    }
+    function showNotes() {
+      $('authView').classList.add('hidden');
+      $('notesView').classList.remove('hidden');
+      $('userBar').innerHTML = `<span>${user.email}</span><button class="btn small secondary" id="logoutBtn">Logout</button>`;
+      $('logoutBtn').onclick = logout;
+      loadNotes();
+    }
+    function logout() {
+      token = null; user = null;
+      localStorage.removeItem('notes_token');
+      localStorage.removeItem('notes_user');
+      showAuth();
+    }
+
+    // ---- Auth tab switching ----
+    let authMode = 'login';
+    $('tabLogin').onclick = () => { authMode = 'login'; setAuthMode(); };
+    $('tabRegister').onclick = () => { authMode = 'register'; setAuthMode(); };
+    function setAuthMode() {
+      $('tabLogin').classList.toggle('active', authMode === 'login');
+      $('tabRegister').classList.toggle('active', authMode === 'register');
+      $('authTitle').textContent = authMode === 'login' ? 'Login' : 'Create account';
+      $('authSubmit').textContent = authMode === 'login' ? 'Login' : 'Register';
+      $('authError').textContent = '';
+    }
+
+    $('authForm').onsubmit = async (e) => {
+      e.preventDefault();
+      $('authError').textContent = '';
+      const email = $('authEmail').value.trim();
+      const password = $('authPassword').value;
+      try {
+        if (authMode === 'register') {
+          await api('/register', { method: 'POST', body: JSON.stringify({ email, password }) });
+        }
+        const r = await api('/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+        token = r.access_token;
+        user = { email };
+        localStorage.setItem('notes_token', token);
+        localStorage.setItem('notes_user', JSON.stringify(user));
+        showNotes();
+      } catch (err) {
+        $('authError').textContent = err.message || 'Login failed';
+      }
+    };
+
+    // ---- Notes toolbar ----
+    let searchDebounce;
+    $('searchInput').oninput = (e) => {
+      clearTimeout(searchDebounce);
+      searchQuery = e.target.value.trim();
+      searchDebounce = setTimeout(() => { page = 1; loadNotes(); }, 250);
+    };
+    $('filterArchived').onchange = (e) => { archivedFilter = e.target.value; page = 1; loadNotes(); };
+    $('filterShared').onchange = (e) => { sharedFilter = e.target.value; page = 1; loadNotes(); };
+    $('newNoteBtn').onclick = () => openEditor(null);
+
+    async function loadNotes() {
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: '12',
+          archived: archivedFilter,
+          shared: sharedFilter,
+        });
+        let data;
+        if (searchQuery) {
+          data = await api(`/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=12`);
+        } else {
+          data = await api(`/notes?${params}`);
+        }
+        renderNotes(data.items, data.pagination);
+      } catch (err) {
+        if (err.status === 401) logout();
+        else alert(err.message);
+      }
+    }
+
+    function renderNotes(items, pagination) {
+      const grid = $('notesGrid');
+      grid.innerHTML = '';
+      if (!items || items.length === 0) {
+        $('notesEmpty').classList.remove('hidden');
+      } else {
+        $('notesEmpty').classList.add('hidden');
+        items.forEach((n) => {
+          const card = document.createElement('div');
+          card.className = 'note-card' + (n.pinned ? ' pinned' : '');
+          const isOwner = n.owner_id === undefined || n.owner_id === currentUserIdGuess();
+          card.innerHTML = `
+            <h3>${n.pinned ? '📌 ' : ''}${escapeHtml(n.title)} ${n.archived ? '<span class="badge">archived</span>' : ''}</h3>
+            <div class="content">${escapeHtml(n.content || '')}</div>
+            <div class="tags">${(n.tags || []).map((t) => `<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>
+            <div class="meta">
+              <span>Updated ${formatDate(n.updated_at)}</span>
+              ${!isOwner ? '<span class="badge shared">shared</span>' : ''}
+            </div>`;
+          card.onclick = () => openEditor(n);
+          grid.appendChild(card);
+        });
+      }
+      const p = $('pagination');
+      p.innerHTML = '';
+      if (pagination && pagination.total_pages > 1) {
+        const prev = document.createElement('button');
+        prev.className = 'btn small secondary';
+        prev.textContent = '← Prev';
+        prev.disabled = !pagination.has_prev;
+        prev.onclick = () => { page--; loadNotes(); };
+        const info = document.createElement('span');
+        info.style.padding = '6px 12px';
+        info.textContent = `Page ${pagination.page} of ${pagination.total_pages}`;
+        const next = document.createElement('button');
+        next.className = 'btn small secondary';
+        next.textContent = 'Next →';
+        next.disabled = !pagination.has_next;
+        next.onclick = () => { page++; loadNotes(); };
+        p.append(prev, info, next);
+      }
+    }
+
+    function currentUserIdGuess() {
+      // We don't store user id; rely on owner_id presence + share badge logic in renderNotes.
+      return user?.id || null;
+    }
+
+    // ---- Editor ----
+    function openEditor(note) {
+      currentNote = note;
+      $('editorTitle').textContent = note ? 'Edit note' : 'New note';
+      $('noteTitle').value = note?.title || '';
+      $('noteContent').value = note?.content || '';
+      $('noteTags').value = (note?.tags || []).join(', ');
+      $('notePinned').checked = !!note?.pinned;
+      $('noteArchived').checked = !!note?.archived;
+      $('editorError').textContent = '';
+      $('deleteNoteBtn').classList.toggle('hidden', !note);
+      $('shareNoteBtn').classList.toggle('hidden', !note);
+      $('versionsBtn').classList.toggle('hidden', !note);
+      $('archiveLabel').classList.toggle('hidden', !note);
+      $('editorBg').classList.add('open');
+    }
+    function closeEditor() {
+      $('editorBg').classList.remove('open');
+      currentNote = null;
+    }
+    $('closeEditor').onclick = closeEditor;
+
+    $('editorForm').onsubmit = async (e) => {
+      e.preventDefault();
+      $('editorError').textContent = '';
+      const payload = {
+        title: $('noteTitle').value.trim(),
+        content: $('noteContent').value,
+        tags: $('noteTags').value.split(',').map((t) => t.trim()).filter(Boolean),
+        pinned: $('notePinned').checked,
+      };
+      if (currentNote) payload.archived = $('noteArchived').checked;
+      try {
+        if (currentNote) {
+          await api(`/notes/${currentNote.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+        } else {
+          await api('/notes', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        closeEditor();
+        loadNotes();
+      } catch (err) {
+        $('editorError').textContent = err.message || 'Save failed';
+      }
+    };
+
+    $('deleteNoteBtn').onclick = async () => {
+      if (!currentNote) return;
+      if (!confirm('Delete this note? This cannot be undone.')) return;
+      try {
+        await api(`/notes/${currentNote.id}`, { method: 'DELETE' });
+        closeEditor();
+        loadNotes();
+      } catch (err) {
+        $('editorError').textContent = err.message;
+      }
+    };
+
+    // ---- Share ----
+    $('shareNoteBtn').onclick = async () => {
+      $('shareError').textContent = '';
+      $('shareEmail').value = '';
+      $('sharePermission').value = 'read';
+      $('shareBg').classList.add('open');
+      await loadShares();
+    };
+    $('closeShare').onclick = () => $('shareBg').classList.remove('open');
+    async function loadShares() {
+      try {
+        const r = await api(`/notes/${currentNote.id}/shares`);
+        $('shareList').innerHTML = r.shares.map((s) => `
+          <li>
+            <span>${escapeHtml(s.email)} <small style="color:var(--muted)">(${s.permission})</small></span>
+            <button class="btn small danger" data-email="${escapeHtml(s.email)}">Revoke</button>
+          </li>`).join('');
+        $('shareList').querySelectorAll('button[data-email]').forEach((b) => {
+          b.onclick = async () => {
+            try {
+              await api(`/notes/${currentNote.id}/share`, {
+                method: 'DELETE',
+                body: JSON.stringify({ revoke_email: b.dataset.email }),
+              });
+              loadShares();
+            } catch (err) { alert(err.message); }
+          };
+        });
+      } catch (err) {
+        $('shareList').innerHTML = `<li style="color:var(--danger)">${err.message}</li>`;
+      }
+    }
+    $('shareForm').onsubmit = async (e) => {
+      e.preventDefault();
+      $('shareError').textContent = '';
+      try {
+        await api(`/notes/${currentNote.id}/share`, {
+          method: 'POST',
+          body: JSON.stringify({
+            share_with_email: $('shareEmail').value.trim(),
+            permission: $('sharePermission').value,
+          }),
+        });
+        $('shareEmail').value = '';
+        loadShares();
+      } catch (err) {
+        $('shareError').textContent = err.message;
+      }
+    };
+
+    // ---- Versions ----
+    $('versionsBtn').onclick = async () => {
+      $('versionsBg').classList.add('open');
+      try {
+        const r = await api(`/notes/${currentNote.id}/versions`);
+        $('versionsList').innerHTML = r.versions.length === 0
+          ? '<li>No previous versions yet.</li>'
+          : r.versions.map((v) => `
+            <li>
+              <strong>${escapeHtml(v.title)}</strong>
+              <div class="v-meta">by ${escapeHtml(v.edited_by_email)} at ${formatDate(v.edited_at)}</div>
+              <div style="white-space:pre-wrap;color:var(--muted);margin-top:4px;">${escapeHtml((v.content||'').slice(0,200))}${(v.content||'').length>200?'…':''}</div>
+            </li>`).join('');
+      } catch (err) {
+        $('versionsList').innerHTML = `<li style="color:var(--danger)">${err.message}</li>`;
+      }
+    };
+    $('closeVersions').onclick = () => $('versionsBg').classList.remove('open');
+
+    // ---- Utils ----
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      }[c]));
+    }
+    function formatDate(s) {
+      try { return new Date(s).toLocaleString(); } catch { return s; }
+    }
+
+    // ---- Bootstrap ----
+    if (token) showNotes(); else showAuth();
+  })();
+  </script>
+</body>
+</html>
